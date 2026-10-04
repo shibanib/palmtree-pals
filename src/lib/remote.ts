@@ -1,4 +1,4 @@
-import { isMeetupDate, isPerson, type MeetupInput } from "@/lib/board";
+import { editedMeetup, isMeetupDate, isPerson, type MeetupInput, type Person } from "@/lib/board";
 import { emojiCells, rowsToMeetups, type MeetupRow, type RemoteMeetup } from "@/lib/rows";
 import { supabase } from "@/lib/supabase";
 
@@ -46,22 +46,24 @@ export async function insertMeetup(
   }
 }
 
-export async function updateMeetupEmojis(
+export async function updateMeetup(
   meetup: RemoteMeetup,
-  emojis: string,
-): Promise<{ ok: true; cells: string[] } | { ok: false; message: string }> {
-  const cells = emojiCells(emojis);
-  if (!cells || meetup.remoteId == null) return { ok: false, message: WRITE_MESSAGE };
+  input: { attendees: readonly string[]; emojis: string },
+): Promise<{ ok: true; attendees: Person[]; cells: string[] } | { ok: false; message: string }> {
+  const patch = editedMeetup(input.attendees, input.emojis);
+  if (!patch || meetup.remoteId == null) return { ok: false, message: WRITE_MESSAGE };
   try {
     const { data, error } = await supabase
       .from("meetups")
-      .update({ emojis: cells })
+      .update({ attendees: patch.attendees, emojis: patch.emojis })
       .eq("id", meetup.remoteId)
       .select("*");
     if (error || !Array.isArray(data) || data.length === 0) {
       return { ok: false, message: WRITE_MESSAGE };
     }
-    return { ok: true, cells };
+    const saved = rowsToMeetups(data as MeetupRow[])[0];
+    if (!saved) return { ok: false, message: WRITE_MESSAGE };
+    return { ok: true, attendees: saved.attendees, cells: saved.emojiCells };
   } catch {
     return { ok: false, message: WRITE_MESSAGE };
   }

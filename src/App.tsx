@@ -31,7 +31,7 @@ import { burstConfetti } from "@/lib/confetti";
 import {
   insertMeetup,
   loadShared,
-  updateMeetupEmojis,
+  updateMeetup,
   type RemoteMeetup,
 } from "@/lib/remote";
 
@@ -110,13 +110,17 @@ export default function App() {
     return true;
   }
 
-  async function saveEmojis(id: string, emojis: string): Promise<boolean> {
+  async function saveMeetup(
+    id: string,
+    attendees: Person[],
+    emojis: string,
+  ): Promise<boolean> {
     const meetup = meetups.find((item) => item.id === id);
     if (!writable || !meetup) {
       setStorageError(sharedUnavailable);
       return false;
     }
-    const result = await updateMeetupEmojis(meetup, emojis);
+    const result = await updateMeetup(meetup, { attendees, emojis });
     if (!result.ok) {
       setStorageError(result.message);
       return false;
@@ -125,7 +129,14 @@ export default function App() {
     setMeetups((current) =>
       current.map((item) =>
         item.id === id
-          ? { ...item, emojis: emojis.trim(), emojisArePlaceholder: false, emojiCells: result.cells }
+          ? {
+              ...item,
+              attendees: result.attendees,
+              attendeeCells: result.attendees,
+              emojis: result.cells.join(""),
+              emojisArePlaceholder: result.cells.length === 3 && result.cells.every((cell) => cell === "❓"),
+              emojiCells: result.cells,
+            }
           : item,
       ),
     );
@@ -214,7 +225,7 @@ export default function App() {
           </div>
         </section>
 
-        <MeetupList meetups={board.meetups} ready={ready} onSaveEmojis={saveEmojis} />
+        <MeetupList meetups={board.meetups} ready={ready} onSave={saveMeetup} />
 
         <GoaUnlock total={board.total} />
       </main>
@@ -300,33 +311,7 @@ function LogForm({
             From May 2026.
           </p>
         </div>
-        <fieldset className="people" aria-describedby="people-hint">
-          <legend>Who was there</legend>
-          <p id="people-hint" className="hint">
-            At least two.
-          </p>
-          <div className="people-grid">
-            {ROSTER.map((name) => {
-              const on = selected.includes(name);
-              return (
-                <Label
-                  key={name}
-                  className="person"
-                  data-on={on ? "true" : "false"}
-                  onClick={() => toggle(name, !on)}
-                >
-                  <Checkbox
-                    checked={on}
-                    onClick={(event) => event.stopPropagation()}
-                    onCheckedChange={(value) => toggle(name, value === true)}
-                    aria-label={name}
-                  />
-                  <span>{name}</span>
-                </Label>
-              );
-            })}
-          </div>
-        </fieldset>
+        <PeopleField idPrefix="log" selected={selected} onToggle={toggle} />
         <div className="field">
           <Label htmlFor="meetup-emojis">Three emojis</Label>
           <Input
@@ -365,34 +350,81 @@ function LogForm({
   );
 }
 
+function PeopleField({
+  idPrefix,
+  selected,
+  onToggle,
+}: {
+  idPrefix: string;
+  selected: readonly Person[];
+  onToggle: (name: Person, on: boolean) => void;
+}) {
+  return (
+    <fieldset className="people">
+      <legend>Who was there</legend>
+      <p className="hint">At least two.</p>
+      <div className="people-grid">
+        {ROSTER.map((name) => {
+          const on = selected.includes(name);
+          const id = `${idPrefix}-${name}`;
+          return (
+            <div key={name} className="person" data-on={on ? "true" : "false"}>
+              <Checkbox
+                id={id}
+                checked={on}
+                onCheckedChange={(value) => onToggle(name, value === true)}
+                aria-label={name}
+              />
+              <Label htmlFor={id}>{name}</Label>
+            </div>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
 function MeetupList({
   meetups,
   ready,
-  onSaveEmojis,
+  onSave,
 }: {
   meetups: Meetup[];
   ready: boolean;
-  onSaveEmojis: (id: string, emojis: string) => Promise<boolean>;
+  onSave: (id: string, attendees: Person[], emojis: string) => Promise<boolean>;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [draftPeople, setDraftPeople] = useState<Person[]>([]);
   const [editError, setEditError] = useState<string | null>(null);
 
   function start(meetup: Meetup) {
     setEditingId(meetup.id);
     setDraft(displayEmojis(meetup.emojis));
+    setDraftPeople(meetup.attendees);
     setEditError(null);
+  }
+
+  function togglePerson(name: Person, on: boolean) {
+    playSound(on ? "tick" : "tock");
+    setDraftPeople((current) => {
+      if (on) return current.includes(name) ? current : [...current, name];
+      return current.filter((person) => person !== name);
+    });
   }
 
   async function save(event: FormEvent, id: string) {
     event.preventDefault();
     playSound("save");
-    if (!isEmojiTrio(draft)) {
+    const problems: string[] = [];
+    if (draftPeople.length < 2) problems.push("Pick at least two people.");
+    if (!isEmojiTrio(draft)) problems.push("Use exactly three emojis.");
+    if (problems.length > 0) {
       playSound("error");
-      setEditError("Use exactly three emojis.");
+      setEditError(problems.join(" "));
       return;
     }
-    const saved = await onSaveEmojis(id, draft.trim());
+    const saved = await onSave(id, draftPeople, draft.trim());
     if (!saved) {
       playSound("error");
       return;
@@ -421,26 +453,28 @@ function MeetupList({
                     <time dateTime={meetup.date}>{formatDate(meetup.date)}</time>
                     {note ? <span>{note}</span> : null}
                   </p>
-                  <p className="names">{joinNames(meetup.attendees)}</p>
                   {editing ? (
                     <form className="edit-form" onSubmit={(event) => save(event, meetup.id)}>
-                      <Label htmlFor={`edit-${meetup.id}`}>Three emojis</Label>
-                      <Input
-                        id={`edit-${meetup.id}`}
-                        value={draft}
-                        onChange={(event) => setDraft(event.target.value)}
-                        className="field-control"
-                        autoComplete="off"
-                        aria-invalid={editError ? true : undefined}
-                      />
+                      <PeopleField idPrefix="edit" selected={draftPeople} onToggle={togglePerson} />
+                      <div className="field">
+                        <Label htmlFor={`edit-${meetup.id}`}>Three emojis</Label>
+                        <Input
+                          id={`edit-${meetup.id}`}
+                          value={draft}
+                          onChange={(event) => setDraft(event.target.value)}
+                          className="field-control"
+                          autoComplete="off"
+                          aria-invalid={editError ? true : undefined}
+                        />
+                      </div>
                       {editError ? (
-                        <p className="form-error" role="alert">
+                        <p className="form-error" role="alert" data-testid="edit-error">
                           {editError}
                         </p>
                       ) : null}
                       <div className="edit-actions">
                         <Button type="submit" className="submit">
-                          Save emojis
+                          Save
                         </Button>
                         <Button
                           type="button"
@@ -453,6 +487,9 @@ function MeetupList({
                       </div>
                     </form>
                   ) : (
+                    <p className="names">{joinNames(meetup.attendees)}</p>
+                  )}
+                  {editing ? null : (
                     <>
                       <p
                         className={meetup.emojisArePlaceholder ? "emoji-placeholder" : "emoji-line"}
@@ -472,7 +509,7 @@ function MeetupList({
                     className="edit-button"
                     onClick={() => start(meetup)}
                   >
-                    Edit emojis
+                    Edit
                   </Button>
                 )}
               </li>

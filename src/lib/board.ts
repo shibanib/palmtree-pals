@@ -86,6 +86,18 @@ export function isEmojiTrio(input: string): boolean {
   return emojis !== null && emojis.length === 3;
 }
 
+/** People and emojis for an edit. Order of the names is kept. `null` if it would not count. */
+export function editedMeetup(
+  attendees: readonly string[],
+  emojis: string,
+): { attendees: Person[]; emojis: string[] } | null {
+  const people = attendees.filter(isPerson);
+  const unique = people.filter((name, index) => people.indexOf(name) === index);
+  const cells = emojiGraphemes(emojis);
+  if (unique.length < 2 || cells === null || cells.length !== 3) return null;
+  return { attendees: unique, emojis: cells };
+}
+
 export function isValidDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year, month, day] = value.split("-").map(Number);

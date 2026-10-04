@@ -14,6 +14,7 @@ import {
   mergeMeetups,
   EARLIEST_MEETUP,
   isMeetupDate,
+  editedMeetup,
   sanitizeMeetup,
   type Buyer,
   type Meetup,
@@ -95,6 +96,15 @@ test("meetup dates start in May 2026", () => {
     ),
     null,
   );
+});
+
+test("an edit can change who was there and keeps their order", () => {
+  const same = editedMeetup(["louise", "ninja"], "🧺 🍹 😴");
+  assert.deepEqual(same, { attendees: ["louise", "ninja"], emojis: ["🧺", "🍹", "😴"] });
+  const added = editedMeetup(["louise", "ninja", "batman"], "🧺🍹😴");
+  assert.deepEqual(added?.attendees, ["louise", "ninja", "batman"]);
+  assert.equal(editedMeetup(["batman"], "🌴☀️🌊"), null);
+  assert.equal(editedMeetup(["ninja", "louise"], "🌴🌴"), null);
 });
 
 test("fewer than two attendees does not count", () => {

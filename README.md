@@ -2,7 +2,7 @@
 
 A meetup ledger for ninja, louise, joker, and batman. Log who showed up, keep a point each, and watch the group climb toward the next milestone.
 
-The shared log is the Supabase table `public.meetups`, with `day`, `attendees`, and `emojis`. The page reads those rows on load, inserts a row when a meetup is logged, and updates that row when emojis are edited. It does not copy the October rows in again. Nothing is saved in this browser. There are no accounts.
+The shared log is the Supabase table `public.meetups`, with `day`, `attendees`, and `emojis`. The page reads those rows on load, inserts a row when a meetup is logged, and updates that row when the people or emojis are edited. It does not copy the October rows in again. Nothing is saved in this browser. There are no accounts.
 
 ## Run locally
 

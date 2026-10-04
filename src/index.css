@@ -410,6 +410,8 @@ h1 {
 .edit-form {
   display: grid;
   gap: 0.45rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .log-form {
@@ -417,7 +419,16 @@ h1 {
   gap: 0.85rem;
 }
 
+.field {
+  overflow: hidden;
+}
+
 .field-control {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
   height: 2.7rem !important;
   border-radius: 2px !important;
   border: 2px solid #1a120e !important;
@@ -426,6 +437,11 @@ h1 {
   color: #2a1c14 !important;
   font-size: 1rem !important;
   box-shadow: inset 1px 1px 0 #fff;
+}
+
+.field-control[type="date"] {
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .people {

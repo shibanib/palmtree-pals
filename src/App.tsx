@@ -14,12 +14,9 @@ import {
   isEmojiTrio,
   isValidDate,
   joinNames,
-  mergeMeetups,
   milestoneLine,
-  sanitizeMeetup,
   surpriseOwner,
   todayISO,
-  type LocalExtras,
   type Meetup,
   type MeetupInput,
   type Person,
@@ -27,18 +24,23 @@ import {
 } from "@/lib/board";
 import { playClick } from "@/lib/click";
 import { burstConfetti } from "@/lib/confetti";
-import { readVault, writeVault } from "@/lib/storage";
+import {
+  insertMeetup,
+  loadShared,
+  updateMeetupEmojis,
+  type RemoteMeetup,
+} from "@/lib/remote";
 
-const sharedMeetups = sharedFile.meetups.flatMap((input) => {
-  const meetup = sanitizeMeetup(input, "shared");
-  return meetup ? [meetup] : [];
-});
+const sharedUnavailable = "The shared log couldn't be read.";
 
 const drinkRule =
   "Fewest points buys the round — three in a row, then the next lowest.";
 
 export default function App() {
-  const stored = useState(() => readVault())[0];
+  const [meetups, setMeetups] = useState<RemoteMeetup[]>([]);
+  const [writable, setWritable] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [storageError, setStorageError] = useState<string | null>(null);
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       const target = event.target;
@@ -47,11 +49,20 @@ export default function App() {
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
   }, []);
-  const [vault, setVault] = useState<LocalExtras>(stored.vault);
-  const [storageError, setStorageError] = useState<string | null>(stored.error);
-  const board = useMemo(() => buildBoard(mergeMeetups(sharedMeetups, vault)), [vault]);
-  const hasLocal =
-    vault.meetups.length > 0 || Object.keys(vault.emojiEdits).length > 0;
+  useEffect(() => {
+    let live = true;
+    loadShared().then((result) => {
+      if (!live) return;
+      setMeetups(result.meetups);
+      setWritable(result.source === "remote");
+      setStorageError(result.message);
+      setReady(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  const board = useMemo(() => buildBoard(meetups), [meetups]);
   const span = board.next - board.previous;
   const filled = span === 0 ? 0 : ((board.total - board.previous) / span) * 100;
   const nextLine = milestoneLine(
@@ -59,30 +70,41 @@ export default function App() {
     surpriseOwner(board.next, sharedFile.surprises, sharedFile.surpriseSeed),
   );
 
-  function persist(next: LocalExtras) {
-    const error = writeVault(next);
-    if (error) {
-      setStorageError(error);
-      return;
+  async function addMeetup(input: MeetupInput): Promise<boolean> {
+    if (!writable) {
+      setStorageError(sharedUnavailable);
+      return false;
+    }
+    const result = await insertMeetup(input);
+    if (!result.ok) {
+      setStorageError(result.message);
+      return false;
     }
     setStorageError(null);
-    setVault(next);
+    setMeetups((current) => [...current, result.meetup]);
+    return true;
   }
 
-  function addMeetup(input: MeetupInput) {
-    persist({ ...vault, meetups: [...vault.meetups, input] });
-  }
-
-  function saveEmojis(id: string, emojis: string) {
-    const localIndex = vault.meetups.findIndex((meetup) => meetup.id === id);
-    if (localIndex >= 0) {
-      const meetups = vault.meetups.map((meetup, index) =>
-        index === localIndex ? { ...meetup, emojis, emojisArePlaceholder: false } : meetup,
-      );
-      persist({ ...vault, meetups });
-      return;
+  async function saveEmojis(id: string, emojis: string): Promise<boolean> {
+    const meetup = meetups.find((item) => item.id === id);
+    if (!writable || !meetup) {
+      setStorageError(sharedUnavailable);
+      return false;
     }
-    persist({ ...vault, emojiEdits: { ...vault.emojiEdits, [id]: emojis } });
+    const result = await updateMeetupEmojis(meetup, emojis);
+    if (!result.ok) {
+      setStorageError(result.message);
+      return false;
+    }
+    setStorageError(null);
+    setMeetups((current) =>
+      current.map((item) =>
+        item.id === id
+          ? { ...item, emojis: emojis.trim(), emojisArePlaceholder: false, emojiCells: result.cells }
+          : item,
+      ),
+    );
+    return true;
   }
 
   const drinkStatus =
@@ -100,8 +122,10 @@ export default function App() {
           <span>summer ledger</span>
         </p>
         <header className="mast">
-          <PalmMark />
-          <h1>PalmTree Pals</h1>
+          <p className="palm-emoji" aria-hidden="true">
+            🌴
+          </p>
+          <h1>What's the plan?</h1>
         </header>
 
         <section className="panel milestone" data-window="Next" aria-labelledby="next-milestone">
@@ -165,11 +189,7 @@ export default function App() {
           <LogForm onAdd={addMeetup} storageError={storageError} />
         </div>
 
-        <MeetupList meetups={board.meetups} onSaveEmojis={saveEmojis} />
-
-        {hasLocal ? (
-          <p className="quiet">On this browser until it's in the shared file.</p>
-        ) : null}
+        <MeetupList meetups={board.meetups} ready={ready} onSaveEmojis={saveEmojis} />
       </main>
     </div>
   );
@@ -179,7 +199,7 @@ function LogForm({
   onAdd,
   storageError,
 }: {
-  onAdd: (meetup: MeetupInput) => void;
+  onAdd: (meetup: MeetupInput) => Promise<boolean>;
   storageError: string | null;
 }) {
   const [date, setDate] = useState(todayISO);
@@ -197,7 +217,7 @@ function LogForm({
     });
   }
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
     const problems: string[] = [];
     if (!isValidDate(date)) problems.push("Choose a date.");
@@ -207,7 +227,7 @@ function LogForm({
       setError(problems.join(" "));
       return;
     }
-    onAdd({
+    const saved = await onAdd({
       id: crypto.randomUUID(),
       date,
       attendees: selected,
@@ -215,6 +235,7 @@ function LogForm({
       emojisArePlaceholder: false,
       sequence: Date.now(),
     });
+    if (!saved) return;
     burstConfetti();
     setSelected([]);
     setEmojis("");
@@ -298,10 +319,12 @@ function LogForm({
 
 function MeetupList({
   meetups,
+  ready,
   onSaveEmojis,
 }: {
   meetups: Meetup[];
-  onSaveEmojis: (id: string, emojis: string) => void;
+  ready: boolean;
+  onSaveEmojis: (id: string, emojis: string) => Promise<boolean>;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -313,13 +336,14 @@ function MeetupList({
     setEditError(null);
   }
 
-  function save(event: FormEvent, id: string) {
+  async function save(event: FormEvent, id: string) {
     event.preventDefault();
     if (!isEmojiTrio(draft)) {
       setEditError("Use exactly three emojis.");
       return;
     }
-    onSaveEmojis(id, draft.trim());
+    const saved = await onSaveEmojis(id, draft.trim());
+    if (!saved) return;
     setEditingId(null);
     setEditError(null);
   }
@@ -327,7 +351,9 @@ function MeetupList({
   return (
     <section className="panel" data-window="Meetups" aria-labelledby="recent-heading">
       <h2 id="recent-heading">Meetups</h2>
-      {meetups.length === 0 ? (
+      {!ready ? (
+        <p className="section-note">Loading the shared log.</p>
+      ) : meetups.length === 0 ? (
         <p className="section-note">No meetups yet.</p>
       ) : (
         <ul className="meetups" data-testid="meetup-list">
@@ -415,27 +441,3 @@ function Palms() {
   );
 }
 
-function PalmMark() {
-  return (
-    <svg className="palm" viewBox="0 0 72 72" aria-hidden="true">
-      <circle cx="36" cy="36" r="34" fill="rgba(255,252,247,0.55)" stroke="url(#rim)" />
-      <path
-        d="M36 54 V34"
-        fill="none"
-        stroke="#1f6f68"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path d="M36 36c-8-10-18-8-20-3 7 1 14 3 20 3Z" fill="#7ebfb6" />
-      <path d="M36 34c8-11 19-8 20-2-8 0-14 2-20 2Z" fill="#e7b2a8" />
-      <path d="M36 32c-2-12-1-18 2-20 2 6 2 14-2 20Z" fill="#2f8f84" />
-      <defs>
-        <linearGradient id="rim" x1="8" y1="6" x2="64" y2="66">
-          <stop stopColor="#ffffff" />
-          <stop offset="0.4" stopColor="#c5ced6" />
-          <stop offset="1" stopColor="#f3e6d4" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}

@@ -22,7 +22,7 @@ import {
   type Person,
   ROSTER,
 } from "@/lib/board";
-import { playClick } from "@/lib/click";
+import { playSound, soundForButton } from "@/lib/click";
 import { burstConfetti } from "@/lib/confetti";
 import {
   insertMeetup,
@@ -44,10 +44,31 @@ export default function App() {
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       const target = event.target;
-      if (target instanceof Element && target.closest("button")) playClick();
+      if (!(target instanceof Element) || target.closest(".person")) return;
+      const button = target.closest("button");
+      if (button) {
+        playSound(soundForButton(button.textContent ?? ""));
+        return;
+      }
+      if (target.closest('input[type="date"]')) playSound("date");
+      else if (target.closest("input, textarea")) playSound("key");
+    };
+    const onInput = (event: Event) => {
+      const target = event.target;
+      if (target instanceof HTMLInputElement && target.type !== "date") playSound("key");
+    };
+    const onChange = (event: Event) => {
+      const target = event.target;
+      if (target instanceof HTMLInputElement && target.type === "date") playSound("dateSet");
     };
     document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
+    document.addEventListener("input", onInput);
+    document.addEventListener("change", onChange);
+    return () => {
+      document.removeEventListener("click", onClick);
+      document.removeEventListener("input", onInput);
+      document.removeEventListener("change", onChange);
+    };
   }, []);
   useEffect(() => {
     let live = true;
@@ -211,6 +232,7 @@ function LogForm({
     parsed === null ? "Use only emojis." : `${parsed.length} of 3`;
 
   function toggle(name: Person, on: boolean) {
+    playSound(on ? "tick" : "tock");
     setSelected((current) => {
       if (on) return ROSTER.filter((person) => current.includes(person) || person === name);
       return current.filter((person) => person !== name);
@@ -219,11 +241,13 @@ function LogForm({
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    playSound("log");
     const problems: string[] = [];
     if (!isValidDate(date)) problems.push("Choose a date.");
     if (selected.length < 2) problems.push("Pick at least two people.");
     if (!isEmojiTrio(emojis)) problems.push("Use exactly three emojis.");
     if (problems.length > 0) {
+      playSound("error");
       setError(problems.join(" "));
       return;
     }
@@ -235,7 +259,11 @@ function LogForm({
       emojisArePlaceholder: false,
       sequence: Date.now(),
     });
-    if (!saved) return;
+    if (!saved) {
+      playSound("error");
+      return;
+    }
+    playSound("logged");
     burstConfetti();
     setSelected([]);
     setEmojis("");
@@ -338,12 +366,18 @@ function MeetupList({
 
   async function save(event: FormEvent, id: string) {
     event.preventDefault();
+    playSound("save");
     if (!isEmojiTrio(draft)) {
+      playSound("error");
       setEditError("Use exactly three emojis.");
       return;
     }
     const saved = await onSaveEmojis(id, draft.trim());
-    if (!saved) return;
+    if (!saved) {
+      playSound("error");
+      return;
+    }
+    playSound("saved");
     setEditingId(null);
     setEditError(null);
   }

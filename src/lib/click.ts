@@ -13,7 +13,8 @@ export type Sound =
   | "logged"
   | "error"
   | "flip"
-  | "buy";
+  | "buy"
+  | "chart";
 
 let audio: AudioContext | null = null;
 let lastKind: Sound | "" = "";
@@ -120,4 +121,17 @@ export function playSound(kind: Sound) {
 
 export function playClick() {
   playSound("tap");
+}
+
+/** A note for one bar. The favorite, rank 0, is the highest. */
+export function playChart(rank: number) {
+  const now = performance.now();
+  if (lastKind === "chart" && now - lastAt < 45) return;
+  lastKind = "chart";
+  lastAt = now;
+  const ctx = context();
+  if (!ctx) return;
+  const step = Number.isFinite(rank) ? Math.max(0, Math.min(16, Math.floor(rank))) : 0;
+  const freq = 1174 - step * 48;
+  tone(ctx, "triangle", freq, freq * 1.2, ctx.currentTime, 0.09, 0.05);
 }

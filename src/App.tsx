@@ -9,6 +9,7 @@ import {
   dayNote,
   displayEmojis,
   drinkLine,
+  emojiChart,
   emojiGraphemes,
   formatDate,
   isEmojiTrio,
@@ -27,7 +28,7 @@ import {
   ROSTER,
 } from "@/lib/board";
 import { buyAnswer } from "@/lib/buy";
-import { playSound, soundForButton } from "@/lib/click";
+import { playChart, playSound, soundForButton } from "@/lib/click";
 import { flipAnswer } from "@/lib/coin";
 import { burstConfetti } from "@/lib/confetti";
 import {
@@ -53,6 +54,10 @@ export default function App() {
       if (!(target instanceof Element) || target.closest(".person")) return;
       const button = target.closest("button");
       if (button) {
+        if (button.dataset.sound === "chart") {
+          playChart(Number(button.dataset.rank ?? "0"));
+          return;
+        }
         playSound(button.dataset.sound === "flip" ? "flip" : soundForButton(button.textContent ?? ""));
         return;
       }
@@ -231,6 +236,8 @@ export default function App() {
         <MeetupList meetups={board.meetups} ready={ready} onSave={saveMeetup} />
 
         <GoaUnlock total={board.total} />
+
+        <EmojiChart meetups={board.meetups} ready={ready} />
       </main>
     </div>
   );
@@ -579,6 +586,45 @@ function CoinFlip() {
       <p className="coin-answer" data-testid="coin-answer">
         {answer}
       </p>
+    </section>
+  );
+}
+
+function EmojiChart({ meetups, ready }: { meetups: Meetup[]; ready: boolean }) {
+  const chart = emojiChart(meetups);
+  const top = chart[0]?.count ?? 1;
+  return (
+    <section className="panel" data-window="Emojis" aria-labelledby="emoji-chart-heading">
+      <h2 id="emoji-chart-heading">Emojis we love</h2>
+      {!ready ? (
+        <p className="section-note">Loading the shared log.</p>
+      ) : chart.length === 0 ? (
+        <p className="section-note">No emojis yet.</p>
+      ) : (
+        <ol className="emoji-chart" data-testid="emoji-chart">
+          {chart.map((row, index) => (
+            <li key={row.emoji}>
+              <button
+                type="button"
+                className="emoji-bar"
+                data-sound="chart"
+                data-rank={index}
+                aria-label={`${row.emoji}, ${row.count} ${row.count === 1 ? "time" : "times"}`}
+              >
+                <span className="emoji-glyph" aria-hidden="true">
+                  {row.emoji}
+                </span>
+                <span className="bar" aria-hidden="true">
+                  <span style={{ width: `${(row.count / top) * 100}%` }} />
+                </span>
+                <span className="pts">
+                  {row.count} {row.count === 1 ? "time" : "times"}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
     </section>
   );
 }

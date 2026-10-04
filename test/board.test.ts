@@ -9,6 +9,7 @@ import {
   drinkLine,
   milestoneLine,
   surpriseOwner,
+  emojiChart,
   emojiGraphemes,
   emptyScores,
   isEmojiTrio,
@@ -118,6 +119,24 @@ test("several meetups on one day are round 1, round 2, and so on", () => {
   assert.equal(dayNote(day[0]!, day), "Round 2");
   assert.equal(dayNote(day[2]!, day), "Round 3");
   assert.equal(dayNote(alone, [alone]), null);
+});
+
+test("the emoji chart ranks what we use, most loved first", () => {
+  const loved = made(1, ["ninja", "louise"], "loved");
+  const again = made(2, ["ninja", "batman"], "again");
+  const placeholder = made(3, ["louise", "joker"], "placeholders");
+  const chart = emojiChart([
+    { ...loved, emojis: "🌴☀️🌊", emojisArePlaceholder: false },
+    { ...again, emojis: "🌴🌴😴", emojisArePlaceholder: false },
+    { ...placeholder, emojis: "❓❓❓", emojisArePlaceholder: true },
+  ]);
+  assert.deepEqual(
+    chart.map((row) => row.emoji),
+    ["🌴", "☀️", "🌊", "😴"],
+  );
+  assert.equal(chart[0]?.count, 3);
+  assert.ok(chart.slice(1).every((row) => row.count === 1));
+  assert.equal(emojiChart([]).length, 0);
 });
 
 test("fewer than two attendees does not count", () => {

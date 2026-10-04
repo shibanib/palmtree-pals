@@ -318,3 +318,25 @@ export function displayEmojis(input: string): string {
   if (!emojis || emojis.length === 0) return input;
   return emojis.join(" ");
 }
+
+export type EmojiCount = { emoji: string; count: number };
+
+/** How often each emoji shows up, most loved first. Placeholders are left out. */
+export function emojiChart(meetups: readonly Meetup[]): EmojiCount[] {
+  const counts = new Map<string, EmojiCount>();
+  for (const meetup of meetups) {
+    if (meetup.emojisArePlaceholder) continue;
+    const cells = emojiGraphemes(meetup.emojis);
+    if (!cells) continue;
+    for (const cell of cells) {
+      const key = cell.replace(/\uFE0F/g, "");
+      const current = counts.get(key);
+      if (!current) counts.set(key, { emoji: cell, count: 1 });
+      else {
+        current.count += 1;
+        if (cell.includes("\uFE0F")) current.emoji = cell;
+      }
+    }
+  }
+  return [...counts.values()].sort((a, b) => b.count - a.count);
+}

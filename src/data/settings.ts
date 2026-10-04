@@ -34,7 +34,7 @@ export const goaPoints = 300;
 export const drinkStreakCap = 3;
 
 /** How long the Buy more points line stays up, in seconds. */
-export const buyMessageSeconds = 30;
+export const buyMessageSeconds = 15;
 
 export const buyLines = [
   "Love don't cost a thing.",

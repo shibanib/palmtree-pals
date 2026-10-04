@@ -481,6 +481,26 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
+.buy-points {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1.15rem;
+}
+
+.buy-button {
+  width: 100%;
+}
+
+.buy-line {
+  margin: 0;
+  min-height: 2.7em;
+  font-family: "Fraunces Variable", serif;
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.25;
+  color: #2a1c14;
+}
+
 .log-form,
 .field,
 .meetups,

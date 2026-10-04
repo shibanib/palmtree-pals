@@ -26,6 +26,7 @@ import {
   type Person,
   ROSTER,
 } from "@/lib/board";
+import { buyAnswer } from "@/lib/buy";
 import { playSound, soundForButton } from "@/lib/click";
 import { flipAnswer } from "@/lib/coin";
 import { burstConfetti } from "@/lib/confetti";
@@ -186,6 +187,7 @@ export default function App() {
                 );
               })}
             </ol>
+            <BuyPoints />
           </section>
 
           <LogForm onAdd={addMeetup} storageError={storageError} />
@@ -523,6 +525,26 @@ function MeetupList({
         </ul>
       )}
     </section>
+  );
+}
+
+function BuyPoints() {
+  const [line, setLine] = useState("Points are not for sale.");
+
+  function buy() {
+    const next = buyAnswer();
+    setLine((current) => (next === current ? buyAnswer() : next));
+  }
+
+  return (
+    <div className="buy-points">
+      <Button type="button" className="submit buy-button" onClick={buy}>
+        Buy more points
+      </Button>
+      <p className="buy-line" data-testid="buy-line">
+        {line}
+      </p>
+    </div>
   );
 }
 

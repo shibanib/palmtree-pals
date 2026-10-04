@@ -12,7 +12,8 @@ export type Sound =
   | "log"
   | "logged"
   | "error"
-  | "flip";
+  | "flip"
+  | "buy";
 
 let audio: AudioContext | null = null;
 let lastKind: Sound | "" = "";
@@ -21,6 +22,7 @@ let lastAt = 0;
 /** Which retro blip a button label should use. */
 export function soundForButton(label: string): Sound {
   const text = label.trim().toLowerCase();
+  if (text.includes("buy")) return "buy";
   if (text.includes("cancel")) return "cancel";
   if (text.includes("save")) return "save";
   if (text.includes("edit")) return "edit";
@@ -104,7 +106,11 @@ export function playSound(kind: Sound) {
     tone(ctx, "square", 659, 659, start + 0.06, 0.05, 0.04);
     tone(ctx, "square", 784, 784, start + 0.12, 0.08, 0.045);
   }   else if (kind === "error") tone(ctx, "sawtooth", 98, 70, start, 0.12, 0.04);
-  else if (kind === "flip") {
+  else if (kind === "buy") {
+    tone(ctx, "square", 1568, 1568, start, 0.04, 0.035);
+    tone(ctx, "square", 1175, 1175, start + 0.06, 0.04, 0.03);
+    tone(ctx, "sawtooth", 330, 90, start + 0.14, 0.16, 0.04);
+  } else if (kind === "flip") {
     for (let step = 0; step < 6; step += 1) {
       tone(ctx, "square", 980 - step * 90, 640, start + step * 0.055, 0.04, 0.028);
     }

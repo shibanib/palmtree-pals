@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --experimental-strip-types --test test/board.test.ts test/remote.test.ts test/click.test.ts test/coin.test.ts",
+    "test": "node --experimental-strip-types --test test/board.test.ts test/remote.test.ts test/click.test.ts test/coin.test.ts test/buy.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

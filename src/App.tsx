@@ -540,7 +540,7 @@ function BuyPoints() {
 
   useEffect(() => {
     if (!line) return;
-    const timer = window.setTimeout(() => setLine(null), 120_000);
+    const timer = window.setTimeout(() => setLine(null), 30_000);
     return () => window.clearTimeout(timer);
   }, [line]);
 

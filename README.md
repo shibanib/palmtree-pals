@@ -17,6 +17,24 @@ The public site is [https://shibanib.github.io/palmtree-pals/](https://shibanib.
 
 `npm run build` writes a static site to `dist`. `npm test` checks scoring, emoji counts, and the milestone rules.
 
+## Settings
+
+The knobs are in `src/data/settings.ts`. Change a value, save, and refresh.
+
+- `buyMessageSeconds` is how long the Buy more points line stays up.
+- `emojiCount` is how many emojis a meetup needs.
+- `minimumAttendees` is how many people have to be there.
+- `earliestMeetup` is the first day you can log, written as `YYYY-MM-DD`.
+- `milestoneEvery` is how many group points between milestones.
+- `fixedSurprises` is who owns 50 and 100. The page names them and does not say what the surprise is.
+- `goaPoints` is when the Goa trip unlocks.
+- `drinkStreakCap` is how many milestones in a row the same person can buy.
+- `roster` is the four names, in order.
+- `buyLines` are the refusals on Buy more points.
+- `goOutChance`, `stayInChance`, `coinOut`, `coinStay`, and `coinBatman` are the coin.
+
+Later surprise names, such as 150 and 200, are in `src/data/meetups.json` under `surprises`. Those draws are already saved. Change a name there if you want someone else. Leave `surpriseSeed` as it is.
+
 ## Scoring
 
 One point per person per meetup. At least two people have to be there. A meetup date cannot be earlier than May 2026. The group total is the sum of everyone's points. Milestones land every 50 points.

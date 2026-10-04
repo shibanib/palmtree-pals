@@ -1,6 +1,23 @@
-export const ROSTER = ["ninja", "louise", "joker", "batman"] as const;
+import {
+  drinkStreakCap,
+  earliestMeetup,
+  emojiCount,
+  fixedSurprises,
+  goaPoints,
+  milestoneEvery,
+  minimumAttendees,
+  roster,
+} from "../data/settings.ts";
 
-export type Person = (typeof ROSTER)[number];
+export const ROSTER = roster;
+
+export type Person = (typeof roster)[number];
+
+export const EARLIEST_MEETUP = earliestMeetup;
+
+export const GOA_POINTS = goaPoints;
+
+export { emojiCount };
 
 export type Buyer =
   | { kind: "person"; name: Person }
@@ -83,7 +100,7 @@ export function emojiGraphemes(input: string): string[] | null {
 
 export function isEmojiTrio(input: string): boolean {
   const emojis = emojiGraphemes(input);
-  return emojis !== null && emojis.length === 3;
+  return emojis !== null && emojis.length === emojiCount;
 }
 
 /** People and emojis for an edit. Order of the names is kept. `null` if it would not count. */
@@ -94,7 +111,7 @@ export function editedMeetup(
   const people = attendees.filter(isPerson);
   const unique = people.filter((name, index) => people.indexOf(name) === index);
   const cells = emojiGraphemes(emojis);
-  if (unique.length < 2 || cells === null || cells.length !== 3) return null;
+  if (unique.length < minimumAttendees || cells === null || cells.length !== emojiCount) return null;
   return { attendees: unique, emojis: cells };
 }
 
@@ -110,8 +127,6 @@ export function isValidDate(value: string): boolean {
 }
 
 /** Meetups count from this day onward. Earlier dates are not logged or shown. */
-export const EARLIEST_MEETUP = "2026-05-01";
-
 export function isMeetupDate(value: string): boolean {
   return isValidDate(value) && value >= EARLIEST_MEETUP;
 }
@@ -131,7 +146,7 @@ export function sanitizeMeetup(
     return null;
   }
   const attendees = ROSTER.filter((name) => input.attendees.includes(name));
-  if (attendees.length < 2) return null;
+  if (attendees.length < minimumAttendees) return null;
   return {
     id: input.id,
     date: input.date,
@@ -143,11 +158,9 @@ export function sanitizeMeetup(
   };
 }
 
-export const GOA_POINTS = 300;
-
 export function milestoneKind(milestone: number): MilestoneKind {
-  if (milestone === 50 || milestone === 100) return "batman";
   if (milestone === GOA_POINTS) return "goa";
+  if (fixedSurprises[milestone]) return "batman";
   return "draw";
 }
 
@@ -168,7 +181,7 @@ export function surpriseOwner(
 ): Person | null {
   const kind = milestoneKind(milestone);
   if (kind === "goa") return null;
-  if (kind === "batman") return "batman";
+  if (kind === "batman") return fixedSurprises[milestone] ?? "batman";
   const saved = surprises[String(milestone)];
   if (saved && isPerson(saved)) return saved;
   return drawFromSeed(milestone, seed);
@@ -180,7 +193,8 @@ export function milestoneLine(milestone: number, owner: Person | null): string {
 }
 
 export function nextMilestone(total: number): number {
-  return (Math.floor(total / 50) + 1) * 50;
+  const step = milestoneEvery > 0 ? milestoneEvery : 50;
+  return (Math.floor(total / step) + 1) * step;
 }
 
 export function joinNames(names: readonly string[]): string {
@@ -195,8 +209,9 @@ function sumScores(scores: Record<Person, number>): number {
 
 /** The person who bought the last three milestones, if that was the same person. */
 export function cappedPerson(history: readonly Buyer[]): Person | null {
-  if (history.length < 3) return null;
-  const last = history.slice(-3);
+  const cap = drinkStreakCap > 0 ? drinkStreakCap : 3;
+  if (history.length < cap) return null;
+  const last = history.slice(-cap);
   const first = last[0];
   if (!first || first.kind !== "person") return null;
   const stuck = last.every((item) => item.kind === "person" && item.name === first.name);
@@ -234,7 +249,7 @@ export function chooseBuyer(
 }
 
 export function drinkLine(stop: DrinkStop): string {
-  const skip = stop.skipped ? ` ${stop.skipped} skipped after three.` : "";
+  const skip = stop.skipped ? ` ${stop.skipped} skipped after ${drinkStreakCap}.` : "";
   if (stop.buyer.kind === "person") {
     return `${stop.milestone} · ${stop.buyer.name} buys the round.${skip}`;
   }
@@ -261,7 +276,8 @@ export function buildBoard(meetups: readonly Meetup[]): Board {
   );
   const scores = emptyScores();
   const drinks: DrinkStop[] = [];
-  let nextDrink = 50;
+  const step = milestoneEvery > 0 ? milestoneEvery : 50;
+  let nextDrink = step;
 
   for (const meetup of ordered) {
     for (const name of meetup.attendees) scores[name] += 1;
@@ -271,7 +287,7 @@ export function buildBoard(meetups: readonly Meetup[]): Board {
     while (total >= nextDrink) {
       const choice = chooseBuyer(tally, drinks.map((stop) => stop.buyer));
       drinks.push({ milestone: nextDrink, buyer: choice.buyer, skipped: choice.skipped });
-      nextDrink += 50;
+      nextDrink += step;
     }
   }
 
@@ -290,7 +306,7 @@ export function buildBoard(meetups: readonly Meetup[]): Board {
     ranking,
     total,
     next,
-    previous: next - 50,
+    previous: next - step,
     drinks,
   };
 }

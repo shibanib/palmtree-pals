@@ -191,7 +191,7 @@ test("a three-in-a-row drink streak resets after a skip", () => {
   if (board.drinks[3]?.buyer.kind === "person") assert.equal(board.drinks[3].buyer.name, "joker");
   if (board.drinks[4]?.buyer.kind === "person") assert.equal(board.drinks[4].buyer.name, "batman");
   assert.match(drinkLine(board.drinks[3]!), /joker buys the round/);
-  assert.match(drinkLine(board.drinks[3]!), /batman skipped after three/);
+  assert.match(drinkLine(board.drinks[3]!), /batman skipped after 3/);
 });
 
 test("a tie for fewest asks the group to pick", () => {

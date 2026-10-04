@@ -1,31 +1,16 @@
+import { coinBatman, coinOut, coinStay, goOutChance, stayInChance } from "../data/settings.ts";
+
 export type CoinKind = "out" | "in" | "batman";
 
 export const COIN_ANSWERS: Record<CoinKind, readonly string[]> = {
-  out: [
-    "Signs point to outside.",
-    "Go out. The night already said yes.",
-    "Shoes on. The palms agree.",
-    "Outlook: a story and a snack.",
-    "Yes. Leave the house.",
-    "The door is the whole plan.",
-    "A meetup is lurking. Go find it.",
-    "Absolutely. The sunset is a hint.",
-    "Don't negotiate with the couch.",
-    "Ask again only after you're out.",
-  ],
-  in: [
-    "You do you, girl. The blanket can win tonight.",
-    "Self care counts. Stay in and mean it.",
-  ],
-  batman: [
-    "If this is batman: stop trying to press this again and again.",
-    "If this is batman: please do whatever you want. We're scared.",
-  ],
+  out: coinOut,
+  in: coinStay,
+  batman: coinBatman,
 };
 
 export function coinKind(random: number): CoinKind {
-  if (random < 0.72) return "out";
-  if (random < 0.88) return "in";
+  if (random < goOutChance) return "out";
+  if (random < goOutChance + stayInChance) return "in";
   return "batman";
 }
 

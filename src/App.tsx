@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import sharedFile from "@/data/meetups.json";
+import { buyMessageSeconds, drinkStreakCap, emojiCount, minimumAttendees } from "@/data/settings";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -40,8 +41,7 @@ import {
 
 const sharedUnavailable = "The shared log couldn't be read.";
 
-const drinkRule =
-  "Fewest points buys the round — three in a row, then the next lowest.";
+const drinkRule = `Fewest points buys the round — ${drinkStreakCap} in a row, then the next lowest.`;
 
 export default function App() {
   const [meetups, setMeetups] = useState<RemoteMeetup[]>([]);
@@ -141,7 +141,8 @@ export default function App() {
               attendees: result.attendees,
               attendeeCells: result.attendees,
               emojis: result.cells.join(""),
-              emojisArePlaceholder: result.cells.length === 3 && result.cells.every((cell) => cell === "❓"),
+              emojisArePlaceholder:
+                result.cells.length === emojiCount && result.cells.every((cell) => cell === "❓"),
               emojiCells: result.cells,
             }
           : item,
@@ -260,7 +261,7 @@ function LogForm({
   const [error, setError] = useState<string | null>(null);
   const parsed = emojiGraphemes(emojis);
   const countLabel =
-    parsed === null ? "Use only emojis." : `${parsed.length} of 3`;
+    parsed === null ? "Use only emojis." : `${parsed.length} of ${emojiCount}`;
 
   function toggle(name: Person, on: boolean) {
     playSound(on ? "tick" : "tock");
@@ -275,9 +276,9 @@ function LogForm({
     playSound("log");
     const problems: string[] = [];
     if (!isValidDate(date)) problems.push("Choose a date.");
-    else if (!isMeetupDate(date)) problems.push("Dates start in May 2026.");
-    if (selected.length < 2) problems.push("Pick at least two people.");
-    if (!isEmojiTrio(emojis)) problems.push("Use exactly three emojis.");
+    else if (!isMeetupDate(date)) problems.push(`Dates start on ${formatDate(EARLIEST_MEETUP)}.`);
+    if (selected.length < minimumAttendees) problems.push(`Pick at least ${minimumAttendees} people.`);
+    if (!isEmojiTrio(emojis)) problems.push(`Use exactly ${emojiCount} emojis.`);
     if (problems.length > 0) {
       playSound("error");
       setError(problems.join(" "));
@@ -318,12 +319,12 @@ function LogForm({
             className="field-control"
           />
           <p id="date-hint" className="hint">
-            From May 2026.
+            From {formatDate(EARLIEST_MEETUP)}.
           </p>
         </div>
         <PeopleField idPrefix="log" selected={selected} onToggle={toggle} />
         <div className="field">
-          <Label htmlFor="meetup-emojis">Three emojis</Label>
+          <Label htmlFor="meetup-emojis">{emojiCount} emojis</Label>
           <Input
             id="meetup-emojis"
             value={emojis}
@@ -372,7 +373,7 @@ function PeopleField({
   return (
     <fieldset className="people">
       <legend>Who was there</legend>
-      <p className="hint">At least two.</p>
+      <p className="hint">At least {minimumAttendees}.</p>
       <div className="people-grid">
         {ROSTER.map((name) => {
           const on = selected.includes(name);
@@ -431,8 +432,8 @@ function MeetupList({
     event.preventDefault();
     playSound("save");
     const problems: string[] = [];
-    if (draftPeople.length < 2) problems.push("Pick at least two people.");
-    if (!isEmojiTrio(draft)) problems.push("Use exactly three emojis.");
+    if (draftPeople.length < minimumAttendees) problems.push(`Pick at least ${minimumAttendees} people.`);
+    if (!isEmojiTrio(draft)) problems.push(`Use exactly ${emojiCount} emojis.`);
     if (problems.length > 0) {
       playSound("error");
       setEditError(problems.join(" "));
@@ -471,7 +472,7 @@ function MeetupList({
                     <form className="edit-form" onSubmit={(event) => save(event, meetup.id)}>
                       <PeopleField idPrefix="edit" selected={draftPeople} onToggle={togglePerson} />
                       <div className="field">
-                        <Label htmlFor={`edit-${meetup.id}`}>Three emojis</Label>
+                        <Label htmlFor={`edit-${meetup.id}`}>{emojiCount} emojis</Label>
                         <Input
                           id={`edit-${meetup.id}`}
                           value={draft}
@@ -540,7 +541,7 @@ function BuyPoints() {
 
   useEffect(() => {
     if (!line) return;
-    const timer = window.setTimeout(() => setLine(null), 30_000);
+    const timer = window.setTimeout(() => setLine(null), buyMessageSeconds * 1000);
     return () => window.clearTimeout(timer);
   }, [line]);
 

@@ -1,4 +1,5 @@
 import {
+  emojiCount,
   emojiGraphemes,
   isPerson,
   sanitizeMeetup,
@@ -45,7 +46,7 @@ export function rowsToMeetups(rows: readonly MeetupRow[]): RemoteMeetup[] {
       date: row.day.slice(0, 10),
       attendees,
       emojis: emojiCells.join(""),
-      emojisArePlaceholder: emojiCells.length === 3 && emojiCells.every((cell) => cell === "❓"),
+      emojisArePlaceholder: emojiCells.length === emojiCount && emojiCells.every((cell) => cell === "❓"),
       sequence: order + 1,
     };
     const meetup = sanitizeMeetup(input, "shared");

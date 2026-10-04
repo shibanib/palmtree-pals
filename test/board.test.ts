@@ -146,10 +146,13 @@ test("a tie for fewest asks the group to pick", () => {
 test("later surprises are saved in the shared file and do not re-roll", () => {
   assert.equal(surpriseOwner(50, file.surprises, file.surpriseSeed), "batman");
   assert.equal(surpriseOwner(100, file.surprises, file.surpriseSeed), "batman");
-  assert.equal(surpriseOwner(200, file.surprises, file.surpriseSeed), null);
+  assert.equal(surpriseOwner(250, file.surprises, file.surpriseSeed), null);
   assert.equal(milestoneLine(50, "batman"), "50 · batman has a surprise");
-  assert.equal(milestoneLine(200, null), "200 · Goa, for everyone");
-  for (const milestone of [150, 250, 300]) {
+  assert.equal(milestoneLine(250, null), "250 · Goa, for everyone");
+  const at200 = surpriseOwner(200, file.surprises, file.surpriseSeed);
+  assert.equal(at200, surpriseOwner(200, file.surprises, file.surpriseSeed));
+  assert.ok(at200 === "ninja" || at200 === "louise" || at200 === "joker" || at200 === "batman");
+  for (const milestone of [150, 300]) {
     const first = surpriseOwner(milestone, file.surprises, file.surpriseSeed);
     const second = surpriseOwner(milestone, file.surprises, file.surpriseSeed);
     assert.equal(first, second);

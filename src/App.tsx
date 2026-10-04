@@ -13,6 +13,7 @@ import {
   formatDate,
   isEmojiTrio,
   isValidDate,
+  GOA_POINTS,
   joinNames,
   milestoneLine,
   surpriseOwner,
@@ -208,6 +209,8 @@ export default function App() {
         </section>
 
         <MeetupList meetups={board.meetups} ready={ready} onSaveEmojis={saveEmojis} />
+
+        <GoaUnlock total={board.total} />
       </main>
     </div>
   );
@@ -457,6 +460,31 @@ function MeetupList({
           })}
         </ul>
       )}
+    </section>
+  );
+}
+
+function GoaUnlock({ total }: { total: number }) {
+  const left = Math.max(0, GOA_POINTS - total);
+  const filled = Math.min(100, (total / GOA_POINTS) * 100);
+  return (
+    <section className="panel" data-window="Goa" aria-labelledby="goa-heading">
+      <h2 id="goa-heading">250 · Goa, for everyone</h2>
+      <p className="section-note">A trip for the whole group. It unlocks at 250 points.</p>
+      <div
+        className="track"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={GOA_POINTS}
+        aria-valuenow={Math.min(total, GOA_POINTS)}
+        aria-label="Progress to the Goa trip"
+      >
+        <div className="fill" style={{ width: `${filled}%` }} />
+      </div>
+      <p className="progress-copy" data-testid="goa-unlock">
+        {total} of {GOA_POINTS}
+        <span>{left === 0 ? "Unlocked" : `${left} to go`}</span>
+      </p>
     </section>
   );
 }

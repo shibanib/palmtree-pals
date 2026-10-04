@@ -12,6 +12,7 @@ import {
   emojiGraphemes,
   formatDate,
   isEmojiTrio,
+  isPerson,
   EARLIEST_MEETUP,
   isMeetupDate,
   isValidDate,
@@ -399,9 +400,13 @@ function MeetupList({
   const [editError, setEditError] = useState<string | null>(null);
 
   function start(meetup: Meetup) {
+    const stored = (meetup as RemoteMeetup).attendeeCells;
+    const people = (Array.isArray(stored) ? stored.filter(isPerson) : meetup.attendees).filter(
+      (name, index, all) => all.indexOf(name) === index,
+    );
     setEditingId(meetup.id);
     setDraft(displayEmojis(meetup.emojis));
-    setDraftPeople(meetup.attendees);
+    setDraftPeople(people.length >= 2 ? people : meetup.attendees);
     setEditError(null);
   }
 

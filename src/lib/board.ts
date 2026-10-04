@@ -124,7 +124,7 @@ export function sanitizeMeetup(
   };
 }
 
-export const GOA_POINTS = 250;
+export const GOA_POINTS = 300;
 
 export function milestoneKind(milestone: number): MilestoneKind {
   if (milestone === 50 || milestone === 100) return "batman";

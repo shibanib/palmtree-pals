@@ -513,8 +513,8 @@ function GoaUnlock({ total }: { total: number }) {
   const filled = Math.min(100, (total / GOA_POINTS) * 100);
   return (
     <section className="panel" data-window="Goa" aria-labelledby="goa-heading">
-      <h2 id="goa-heading">250 · Goa, for everyone</h2>
-      <p className="section-note">A trip for the whole group. It unlocks at 250 points.</p>
+      <h2 id="goa-heading">{GOA_POINTS} · Goa, for everyone</h2>
+      <p className="section-note">A trip for the whole group. It unlocks at {GOA_POINTS} points.</p>
       <div
         className="track"
         role="progressbar"

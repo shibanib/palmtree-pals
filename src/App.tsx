@@ -609,16 +609,14 @@ function EmojiChart({ meetups, ready }: { meetups: Meetup[]; ready: boolean }) {
                 className="emoji-bar"
                 data-sound="chart"
                 data-rank={index}
+                data-count={row.count}
                 aria-label={`${row.emoji}, ${row.count} ${row.count === 1 ? "time" : "times"}`}
               >
+                <span className="emoji-column" aria-hidden="true">
+                  <span style={{ height: `${(row.count / top) * 100}%` }} />
+                </span>
                 <span className="emoji-glyph" aria-hidden="true">
                   {row.emoji}
-                </span>
-                <span className="bar" aria-hidden="true">
-                  <span style={{ width: `${(row.count / top) * 100}%` }} />
-                </span>
-                <span className="pts">
-                  {row.count} {row.count === 1 ? "time" : "times"}
                 </span>
               </button>
             </li>

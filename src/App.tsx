@@ -24,6 +24,7 @@ import {
   ROSTER,
 } from "@/lib/board";
 import { playSound, soundForButton } from "@/lib/click";
+import { flipAnswer } from "@/lib/coin";
 import { burstConfetti } from "@/lib/confetti";
 import {
   insertMeetup,
@@ -48,7 +49,7 @@ export default function App() {
       if (!(target instanceof Element) || target.closest(".person")) return;
       const button = target.closest("button");
       if (button) {
-        playSound(soundForButton(button.textContent ?? ""));
+        playSound(button.dataset.sound === "flip" ? "flip" : soundForButton(button.textContent ?? ""));
         return;
       }
       if (target.closest('input[type="date"]')) playSound("date");
@@ -211,6 +212,7 @@ export default function App() {
         <MeetupList meetups={board.meetups} ready={ready} onSaveEmojis={saveEmojis} />
 
         <GoaUnlock total={board.total} />
+        <CoinFlip />
       </main>
     </div>
   );
@@ -460,6 +462,42 @@ function MeetupList({
           })}
         </ul>
       )}
+    </section>
+  );
+}
+
+function CoinFlip() {
+  const [turns, setTurns] = useState(0);
+  const [answer, setAnswer] = useState("Tap the coin. Stay in, or go out?");
+
+  function flip() {
+    const next = flipAnswer();
+    setAnswer((current) => (next.text === current ? flipAnswer().text : next.text));
+    setTurns((count) => count + 1);
+  }
+
+  return (
+    <section className="panel coin-panel" data-window="Coin" aria-labelledby="coin-heading">
+      <h2 id="coin-heading">Stay in or go out?</h2>
+      <button
+        type="button"
+        className="coin-button"
+        data-sound="flip"
+        onClick={flip}
+        aria-label="Flip the coin"
+      >
+        <span className="coin" style={{ transform: `rotateY(${turns * 180}deg)` }}>
+          <span className="coin-face coin-palm" aria-hidden="true">
+            🌴
+          </span>
+          <span className="coin-face coin-moon" aria-hidden="true">
+            🌙
+          </span>
+        </span>
+      </button>
+      <p className="coin-answer" data-testid="coin-answer">
+        {answer}
+      </p>
     </section>
   );
 }

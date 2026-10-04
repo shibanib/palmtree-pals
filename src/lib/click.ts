@@ -11,7 +11,8 @@ export type Sound =
   | "saved"
   | "log"
   | "logged"
-  | "error";
+  | "error"
+  | "flip";
 
 let audio: AudioContext | null = null;
 let lastKind: Sound | "" = "";
@@ -102,8 +103,13 @@ export function playSound(kind: Sound) {
     tone(ctx, "square", 523, 523, start, 0.05, 0.04);
     tone(ctx, "square", 659, 659, start + 0.06, 0.05, 0.04);
     tone(ctx, "square", 784, 784, start + 0.12, 0.08, 0.045);
-  } else if (kind === "error") tone(ctx, "sawtooth", 98, 70, start, 0.12, 0.04);
-  else tone(ctx, "square", 740, 180, start, 0.06, 0.05);
+  }   else if (kind === "error") tone(ctx, "sawtooth", 98, 70, start, 0.12, 0.04);
+  else if (kind === "flip") {
+    for (let step = 0; step < 6; step += 1) {
+      tone(ctx, "square", 980 - step * 90, 640, start + step * 0.055, 0.04, 0.028);
+    }
+    tone(ctx, "triangle", 880, 1170, start + 0.36, 0.12, 0.05);
+  } else tone(ctx, "square", 740, 180, start, 0.06, 0.05);
 }
 
 export function playClick() {

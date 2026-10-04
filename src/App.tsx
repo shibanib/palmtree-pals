@@ -128,6 +128,32 @@ export default function App() {
           <h1>What's the plan?</h1>
         </header>
 
+        <div className="split">
+          <section className="panel" data-window="Board" aria-labelledby="board-heading">
+            <h2 id="board-heading">Board</h2>
+            <ol className="ranking" data-testid="leaderboard">
+              {board.ranking.map((row, index) => {
+                const top = Math.max(...board.ranking.map((item) => item.points), 1);
+                const width = row.points === 0 ? 0 : (row.points / top) * 100;
+                return (
+                  <li key={row.name} className="score-row">
+                    <span className="rank">{index + 1}</span>
+                    <span className="who">{row.name}</span>
+                    <span className="bar" aria-hidden="true">
+                      <span style={{ width: `${width}%` }} />
+                    </span>
+                    <span className="pts" data-testid={`score-${row.name}`}>
+                      {row.points} {row.points === 1 ? "point" : "points"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+
+          <LogForm onAdd={addMeetup} storageError={storageError} />
+        </div>
+
         <section className="panel milestone" data-window="Next" aria-labelledby="next-milestone">
           <div className="milestone-top">
             <h2 id="next-milestone">{nextLine}</h2>
@@ -162,32 +188,6 @@ export default function App() {
             ) : null}
           </div>
         </section>
-
-        <div className="split">
-          <section className="panel" data-window="Board" aria-labelledby="board-heading">
-            <h2 id="board-heading">Board</h2>
-            <ol className="ranking" data-testid="leaderboard">
-              {board.ranking.map((row, index) => {
-                const top = Math.max(...board.ranking.map((item) => item.points), 1);
-                const width = row.points === 0 ? 0 : (row.points / top) * 100;
-                return (
-                  <li key={row.name} className="score-row">
-                    <span className="rank">{index + 1}</span>
-                    <span className="who">{row.name}</span>
-                    <span className="bar" aria-hidden="true">
-                      <span style={{ width: `${width}%` }} />
-                    </span>
-                    <span className="pts" data-testid={`score-${row.name}`}>
-                      {row.points} {row.points === 1 ? "point" : "points"}
-                    </span>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
-
-          <LogForm onAdd={addMeetup} storageError={storageError} />
-        </div>
 
         <MeetupList meetups={board.meetups} ready={ready} onSaveEmojis={saveEmojis} />
       </main>

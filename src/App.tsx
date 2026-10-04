@@ -536,7 +536,13 @@ function MeetupList({
 }
 
 function BuyPoints() {
-  const [line, setLine] = useState("Points are not for sale.");
+  const [line, setLine] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!line) return;
+    const timer = window.setTimeout(() => setLine(null), 120_000);
+    return () => window.clearTimeout(timer);
+  }, [line]);
 
   function buy() {
     const next = buyAnswer();
@@ -545,12 +551,14 @@ function BuyPoints() {
 
   return (
     <div className="buy-points">
+      {line ? (
+        <p className="buy-line" data-testid="buy-line" aria-live="polite">
+          {line}
+        </p>
+      ) : null}
       <Button type="button" className="submit buy-button" onClick={buy}>
         Buy more points
       </Button>
-      <p className="buy-line" data-testid="buy-line">
-        {line}
-      </p>
     </div>
   );
 }

@@ -142,10 +142,13 @@ export default function App() {
           <span>summer ledger</span>
         </p>
         <header className="mast">
-          <p className="palm-emoji" aria-hidden="true">
-            🌴
-          </p>
-          <h1>What's the plan?</h1>
+          <div className="mast-title">
+            <p className="palm-emoji" aria-hidden="true">
+              🌴
+            </p>
+            <h1>What's the plan?</h1>
+          </div>
+          <CoinFlip />
         </header>
 
         <div className="split">
@@ -212,7 +215,6 @@ export default function App() {
         <MeetupList meetups={board.meetups} ready={ready} onSaveEmojis={saveEmojis} />
 
         <GoaUnlock total={board.total} />
-        <CoinFlip />
       </main>
     </div>
   );
@@ -477,8 +479,7 @@ function CoinFlip() {
   }
 
   return (
-    <section className="panel coin-panel" data-window="Coin" aria-labelledby="coin-heading">
-      <h2 id="coin-heading">Stay in or go out?</h2>
+    <section className="panel coin-panel" data-window="Flip the coin" aria-label="Flip the coin">
       <button
         type="button"
         className="coin-button"

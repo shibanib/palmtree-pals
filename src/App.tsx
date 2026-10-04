@@ -12,6 +12,8 @@ import {
   emojiGraphemes,
   formatDate,
   isEmojiTrio,
+  EARLIEST_MEETUP,
+  isMeetupDate,
   isValidDate,
   GOA_POINTS,
   joinNames,
@@ -227,7 +229,10 @@ function LogForm({
   onAdd: (meetup: MeetupInput) => Promise<boolean>;
   storageError: string | null;
 }) {
-  const [date, setDate] = useState(todayISO);
+  const [date, setDate] = useState(() => {
+    const today = todayISO();
+    return today < EARLIEST_MEETUP ? EARLIEST_MEETUP : today;
+  });
   const [selected, setSelected] = useState<Person[]>([]);
   const [emojis, setEmojis] = useState("");
   const [showEmojiHint, setShowEmojiHint] = useState(true);
@@ -249,6 +254,7 @@ function LogForm({
     playSound("log");
     const problems: string[] = [];
     if (!isValidDate(date)) problems.push("Choose a date.");
+    else if (!isMeetupDate(date)) problems.push("Dates start in May 2026.");
     if (selected.length < 2) problems.push("Pick at least two people.");
     if (!isEmojiTrio(emojis)) problems.push("Use exactly three emojis.");
     if (problems.length > 0) {
@@ -284,10 +290,15 @@ function LogForm({
           <Input
             id="meetup-date"
             type="date"
+            min={EARLIEST_MEETUP}
             value={date}
             onChange={(event) => setDate(event.target.value)}
+            aria-describedby="date-hint"
             className="field-control"
           />
+          <p id="date-hint" className="hint">
+            From May 2026.
+          </p>
         </div>
         <fieldset className="people" aria-describedby="people-hint">
           <legend>Who was there</legend>

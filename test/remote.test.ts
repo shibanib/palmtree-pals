@@ -43,6 +43,21 @@ test("supabase rows become the board without adding meetups", () => {
   assert.equal(meetups[0]?.remoteId, "23b5a76b-98f3-4b8e-973e-41cab7650b82");
 });
 
+test("rows before May 2026 are left off the board", () => {
+  const meetups = rowsToMeetups([
+    ...rows,
+    {
+      id: "early-day",
+      day: "2026-04-30",
+      attendees: ["louise", "ninja"],
+      emojis: ["🌴", "☀️", "🌊"],
+      created_at: "2026-04-30T12:00:00.000Z",
+    },
+  ]);
+  assert.equal(meetups.length, 3);
+  assert.ok(meetups.every((meetup) => meetup.date >= "2026-05-01"));
+});
+
 test("a missing table is recognized and not treated as an empty log", () => {
   assert.equal(isMissingTable({ code: "PGRST205" }), true);
   assert.equal(isMissingTable({ code: "42501" }), false);

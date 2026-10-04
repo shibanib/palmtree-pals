@@ -12,6 +12,8 @@ import {
   emptyScores,
   isEmojiTrio,
   mergeMeetups,
+  EARLIEST_MEETUP,
+  isMeetupDate,
   sanitizeMeetup,
   type Buyer,
   type Meetup,
@@ -73,6 +75,26 @@ test("emoji graphemes accept exactly three and reject the rest", () => {
   assert.equal(isEmojiTrio("abc"), false);
   assert.equal(isEmojiTrio("hi 🌴☀️🌊"), false);
   assert.equal(emojiGraphemes("🌴a🌊"), null);
+});
+
+test("meetup dates start in May 2026", () => {
+  assert.equal(EARLIEST_MEETUP, "2026-05-01");
+  assert.equal(isMeetupDate("2026-05-01"), true);
+  assert.equal(isMeetupDate("2026-04-30"), false);
+  assert.equal(isMeetupDate("2026-10-02"), true);
+  assert.equal(
+    sanitizeMeetup(
+      {
+        id: "early",
+        date: "2026-04-30",
+        attendees: ["ninja", "louise"],
+        emojis: "🌴☀️🌊",
+        sequence: 1,
+      },
+      "local",
+    ),
+    null,
+  );
 });
 
 test("fewer than two attendees does not count", () => {

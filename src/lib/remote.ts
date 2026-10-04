@@ -1,4 +1,4 @@
-import { isPerson, type MeetupInput } from "@/lib/board";
+import { isMeetupDate, isPerson, type MeetupInput } from "@/lib/board";
 import { emojiCells, rowsToMeetups, type MeetupRow, type RemoteMeetup } from "@/lib/rows";
 import { supabase } from "@/lib/supabase";
 
@@ -28,7 +28,7 @@ export async function insertMeetup(
   input: MeetupInput,
 ): Promise<{ ok: true; meetup: RemoteMeetup } | { ok: false; message: string }> {
   const cells = emojiCells(input.emojis);
-  if (!cells) return { ok: false, message: WRITE_MESSAGE };
+  if (!cells || !isMeetupDate(input.date)) return { ok: false, message: WRITE_MESSAGE };
   const attendees = input.attendees.filter(isPerson);
   try {
     const { data, error } = await supabase

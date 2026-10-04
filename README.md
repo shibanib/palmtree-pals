@@ -19,7 +19,7 @@ The public site is [https://shibanib.github.io/palmtree-pals/](https://shibanib.
 
 ## Scoring
 
-One point per person per meetup. At least two people have to be there. The group total is the sum of everyone's points. Milestones land every 50 points.
+One point per person per meetup. At least two people have to be there. A meetup date cannot be earlier than May 2026. The group total is the sum of everyone's points. Milestones land every 50 points.
 
 50 and 100 are surprises batman owns. The page names batman and does not say what the surprise is. 300 is a trip to Goa for everyone, shown at the end of the page. Later surprises are a one-time draw among the four, saved in the shared file.
 

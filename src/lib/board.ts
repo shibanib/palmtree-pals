@@ -97,6 +97,13 @@ export function isValidDate(value: string): boolean {
   );
 }
 
+/** Meetups count from this day onward. Earlier dates are not logged or shown. */
+export const EARLIEST_MEETUP = "2026-05-01";
+
+export function isMeetupDate(value: string): boolean {
+  return isValidDate(value) && value >= EARLIEST_MEETUP;
+}
+
 export function todayISO(now = new Date()): string {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -108,7 +115,7 @@ export function sanitizeMeetup(
   input: MeetupInput,
   source: "shared" | "local",
 ): Meetup | null {
-  if (!input.id || !isValidDate(input.date) || !isEmojiTrio(input.emojis)) {
+  if (!input.id || !isMeetupDate(input.date) || !isEmojiTrio(input.emojis)) {
     return null;
   }
   const attendees = ROSTER.filter((name) => input.attendees.includes(name));

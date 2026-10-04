@@ -1,0 +1,48 @@
+{
+  "surpriseSeed": "palm-ledger-1997",
+  "surprises": {
+    "150": "louise",
+    "250": "ninja",
+    "300": "batman",
+    "350": "louise",
+    "400": "louise",
+    "450": "ninja",
+    "500": "joker",
+    "550": "batman",
+    "600": "louise",
+    "650": "joker",
+    "700": "ninja",
+    "750": "louise",
+    "800": "batman",
+    "850": "batman",
+    "900": "ninja",
+    "950": "joker",
+    "1000": "joker"
+  },
+  "meetups": [
+    {
+      "id": "2026-10-02-louise-ninja",
+      "date": "2026-10-02",
+      "attendees": ["louise", "ninja"],
+      "emojis": "❓❓❓",
+      "emojisArePlaceholder": true,
+      "sequence": 1
+    },
+    {
+      "id": "2026-10-03-louise-ninja-batman-1",
+      "date": "2026-10-03",
+      "attendees": ["louise", "ninja", "batman"],
+      "emojis": "❓❓❓",
+      "emojisArePlaceholder": true,
+      "sequence": 2
+    },
+    {
+      "id": "2026-10-03-louise-ninja-batman-2",
+      "date": "2026-10-03",
+      "attendees": ["louise", "ninja", "batman"],
+      "emojis": "❓❓❓",
+      "emojisArePlaceholder": true,
+      "sequence": 3
+    }
+  ]
+}

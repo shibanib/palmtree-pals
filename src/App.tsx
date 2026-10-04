@@ -230,6 +230,7 @@ function LogForm({
   const [date, setDate] = useState(todayISO);
   const [selected, setSelected] = useState<Person[]>([]);
   const [emojis, setEmojis] = useState("");
+  const [showEmojiHint, setShowEmojiHint] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const parsed = emojiGraphemes(emojis);
   const countLabel =
@@ -321,7 +322,11 @@ function LogForm({
             id="meetup-emojis"
             value={emojis}
             onChange={(event) => setEmojis(event.target.value)}
-            placeholder="🌴 ☀️ 🌊"
+            onFocus={() => setShowEmojiHint(false)}
+            onBlur={() => {
+              if (!emojis.trim()) setShowEmojiHint(true);
+            }}
+            placeholder={showEmojiHint ? "🌴 ☀️ 🌊" : ""}
             autoComplete="off"
             aria-describedby="emoji-count"
             aria-invalid={error?.includes("emoji") ? true : undefined}

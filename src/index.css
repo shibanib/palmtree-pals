@@ -521,6 +521,11 @@ h1 {
   -webkit-appearance: none;
 }
 
+#meetup-emojis:focus::placeholder {
+  color: transparent;
+  opacity: 0;
+}
+
 .people {
   margin: 0;
   padding: 0;

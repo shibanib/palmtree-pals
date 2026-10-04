@@ -301,9 +301,7 @@ export function dayNote(meetup: Meetup, meetups: readonly Meetup[]): string | nu
     .sort((a, b) => a.sequence - b.sequence || a.id.localeCompare(b.id));
   if (sameDay.length < 2) return null;
   const index = sameDay.findIndex((item) => item.id === meetup.id);
-  if (index === 0) return "First that day";
-  if (index === 1) return "Second that day";
-  return `Meetup ${index + 1} that day`;
+  return `Round ${index + 1}`;
 }
 
 export function formatDate(iso: string): string {

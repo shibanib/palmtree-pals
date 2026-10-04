@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   buildBoard,
+  dayNote,
   chooseBuyer,
   drinkLine,
   milestoneLine,
@@ -105,6 +106,18 @@ test("an edit can change who was there and keeps their order", () => {
   assert.deepEqual(added?.attendees, ["louise", "ninja", "batman"]);
   assert.equal(editedMeetup(["batman"], "🌴☀️🌊"), null);
   assert.equal(editedMeetup(["ninja", "louise"], "🌴🌴"), null);
+});
+
+test("several meetups on one day are round 1, round 2, and so on", () => {
+  const early = made(1, ["louise", "ninja"], "early");
+  const later = made(2, ["louise", "ninja", "batman"], "later");
+  const last = made(3, ["ninja", "batman"], "last");
+  const day = [later, early, last].map((meetup) => ({ ...meetup, date: "2026-10-03" }));
+  const alone = made(4, ["louise", "joker"], "alone");
+  assert.equal(dayNote(day[1]!, day), "Round 1");
+  assert.equal(dayNote(day[0]!, day), "Round 2");
+  assert.equal(dayNote(day[2]!, day), "Round 3");
+  assert.equal(dayNote(alone, [alone]), null);
 });
 
 test("fewer than two attendees does not count", () => {
